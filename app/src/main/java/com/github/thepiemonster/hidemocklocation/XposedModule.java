@@ -77,21 +77,6 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
                     });
                 }
             }
-            XposedHelpers.findAndHookMethod(
-                LocationManager.class,
-                "isProviderEnabled",
-                String.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        String provider = (String) param.args[0];
-                        if (LocationManager.GPS_PROVIDER.equals(provider)) {
-                            param.setResult(true);
-                        }
-                    }
-                }
-            );
-            
         } else if (!GPSJoystickFixer.tryFixJoystickApp(lpparam)) {
             handleLoadPackageForApps(lpparam);
             tryHideSamsungIAPDialog(lpparam);
@@ -132,6 +117,16 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
 
         // Google Play Services
         XposedHelpers.findAndHookMethod("android.location.Location", lpparam.classLoader, "getExtras", hideMockGooglePlayServicesHook);
+
+        XposedHelpers.findAndHookMethod(LocationManager.class,"isProviderEnabled",
+                String.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        param.setResult(true);
+                    }
+                }
+            );
 
         // New way of checking if location is mocked, SDK 18+
         // deprecated in API level 31
