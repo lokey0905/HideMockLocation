@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.location.LocationManager;
 
 import java.lang.reflect.Method;
 
