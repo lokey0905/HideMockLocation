@@ -76,6 +76,21 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
                     });
                 }
             }
+            XposedHelpers.findAndHookMethod(
+                LocationManager.class,
+                "isProviderEnabled",
+                String.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        String provider = (String) param.args[0];
+                        if (LocationManager.GPS_PROVIDER.equals(provider)) {
+                            param.setResult(true);
+                        }
+                    }
+                }
+            );
+            
         } else if (!GPSJoystickFixer.tryFixJoystickApp(lpparam)) {
             handleLoadPackageForApps(lpparam);
             tryHideSamsungIAPDialog(lpparam);
