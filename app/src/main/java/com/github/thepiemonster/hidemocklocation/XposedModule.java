@@ -77,27 +77,41 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
                     });
                 }
             }
-            XposedHelpers.findAndHookMethod(
-                "com.android.server.location.LocationManagerService",
-                lpparam.classLoader,
-                "recoverRealProviderLocked",
-                String.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        String pkg = (String) param.args[0];
-                        // 這裡你可以加上判斷是否有其他pkg進程活著
-                        // 若有活著就直接return，不執行原本的移除邏輯
-                        // 進階：你甚至可以直接 param.setResult(null) 強制不執行
-                        XposedBridge.log("Prevented recoverRealProviderLocked for " + pkg);
-                        param.setResult(null);
-                    }
-                }
-            );
+            tryHookLocationManagerService(lpparam);
         } else if (!GPSJoystickFixer.tryFixJoystickApp(lpparam)) {
             handleLoadPackageForApps(lpparam);
             tryHideSamsungIAPDialog(lpparam);
         }
+    }
+
+    private void tryHookLocationManagerService(XC_LoadPackage.LoadPackageParam lpparam) {
+        // 檢查 LocationManagerService 是否存在
+        Class<?> locationManagerServiceClass = loadClassIfExist(lpparam, "com.android.server.location.LocationManagerService");
+        if (locationManagerServiceClass == null) {
+            XposedBridge.log("LocationManagerService does not exist.");
+            return;
+        }
+    
+        // 獲取 recoverRealProviderLocked 方法
+        Method recoverRealProviderLockedMethod = XposedHelpers.findMethodExactIfExists(
+            locationManagerServiceClass,
+            "recoverRealProviderLocked",
+            String.class // 方法參數類型
+        );
+    
+        if (recoverRealProviderLockedMethod == null) {
+            XposedBridge.log("Method recoverRealProviderLocked does not exist.");
+            return;
+        }
+    
+        // Hook recoverRealProviderLocked 方法
+        XposedBridge.hookMethod(recoverRealProviderLockedMethod, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("Preventing recoverRealProviderLocked from executing.");
+                param.setResult(null); // 阻止原方法執行
+            }
+        });
     }
 
     private void tryHideSamsungIAPDialog(XC_LoadPackage.LoadPackageParam lpparam) {
