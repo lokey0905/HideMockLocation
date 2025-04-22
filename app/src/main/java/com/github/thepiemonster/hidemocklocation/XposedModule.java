@@ -77,6 +77,23 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
                     });
                 }
             }
+            XposedHelpers.findAndHookMethod(
+                "com.android.server.location.LocationManagerService",
+                lpparam.classLoader,
+                "recoverRealProviderLocked",
+                String.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        String pkg = (String) param.args[0];
+                        // 這裡你可以加上判斷是否有其他pkg進程活著
+                        // 若有活著就直接return，不執行原本的移除邏輯
+                        // 進階：你甚至可以直接 param.setResult(null) 強制不執行
+                        XposedBridge.log("Prevented recoverRealProviderLocked for " + pkg);
+                        param.setResult(null);
+                    }
+                }
+            );
         } else if (!GPSJoystickFixer.tryFixJoystickApp(lpparam)) {
             handleLoadPackageForApps(lpparam);
             tryHideSamsungIAPDialog(lpparam);
