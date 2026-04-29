@@ -77,9 +77,6 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
                     });
                 }
             }
-        } else if (!GPSJoystickFixer.tryFixJoystickApp(lpparam)) {
-            handleLoadPackageForApps(lpparam);
-            tryHideSamsungIAPDialog(lpparam);
         }
     }
 
