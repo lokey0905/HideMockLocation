@@ -77,6 +77,8 @@ public class XposedModule implements IXposedHookZygoteInit, IXposedHookLoadPacka
                     });
                 }
             }
+        } else {
+             handleLoadPackageForApps(lpparam);
         }
     }
 
